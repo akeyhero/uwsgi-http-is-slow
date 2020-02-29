@@ -1,0 +1,36 @@
+version: '3.7'
+services:
+  bare:
+    command: ["flask", "run", "--host=0.0.0.0"]
+    build:
+      context: .
+    image: uwsgi-http-is-slow:latest
+    ports:
+      - '5001:5000'
+  uwsgi-http:
+    command: ["uwsgi", "--ini=/uwsgi.ini:http"]
+    build:
+      context: .
+    image: uwsgi-http-is-slow
+    ports:
+      - '5002:80'
+  uwsgi-socket-backend:
+    command: ["uwsgi", "--ini=/uwsgi.ini:socket"]
+    build:
+      context: .
+    image: uwsgi-http-is-slow
+    volumes:
+      - socket:/socket
+  uwsgi-socket:
+    build:
+      context: nginx
+    image: uwsgi-http-is-slow-nginx
+    depends_on:
+      - uwsgi-socket-backend
+    ports:
+      - '5003:80'
+    volumes:
+      - socket:/socket
+volumes:
+  socket:
+    driver: local
